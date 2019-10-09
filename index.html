@@ -1,0 +1,78 @@
+<html>
+
+<style>
+
+    div.buttons { margin-top: 50px; margin-left: 10px; }
+    div.buttons button { margin-left: 10px; }
+
+    div.results { margin-top: 30px; margin-left: 20px; }
+    div.results div { margin-top: 10px; }
+
+</style>
+
+<script>
+
+    async function getPrimeNumber(index) {
+        let promise = new Promise(function(resolve, reject) {
+
+            const worker = new Worker('aworker.js');
+
+            worker.addEventListener('message', function(e) {
+                resolve(e.data);
+            }, false);
+
+            worker.postMessage({'index': index});
+
+        });
+        return promise;        
+    }
+
+    function disableButtons(disable) {
+        document.getElementById("btn1").disabled = disable;
+        document.getElementById("btn2").disabled = disable;
+    }
+
+    async function getSequentialResults() {
+        disableButtons(true);
+        clearResults();
+        document.getElementById("pn1").innerHTML = await getPrimeNumber(70000);
+        document.getElementById("pn2").innerHTML = await getPrimeNumber(40000);
+        document.getElementById("pn3").innerHTML = await getPrimeNumber(30000);
+        disableButtons(false);
+    }
+
+    async function getParallelResults() {
+        disableButtons(true);
+        clearResults();
+        const p1 = getPrimeNumber(70000).then(result => document.getElementById("pn1").innerHTML = result);
+        const p2 = getPrimeNumber(40000).then(result => document.getElementById("pn2").innerHTML = result);
+        const p3 = getPrimeNumber(30000).then(result => document.getElementById("pn3").innerHTML = result);
+        Promise.all([p1, p2, p3]).then(() => disableButtons(false));
+    }
+
+    function clearResults() {
+        document.getElementById("pn1").innerHTML = "";
+        document.getElementById("pn2").innerHTML = "";
+        document.getElementById("pn3").innerHTML = "";
+    }
+
+</script>
+
+<body>
+
+<h2>Calculation of prime numbers in async mode</h2>
+
+<div class="buttons">
+    <button  id="btn1" onclick="getSequentialResults()">Start (sequential)</button>
+    <button id="btn2" onclick="getParallelResults()">Start (parallel)</button>
+    <button onclick="clearResults()">Clear results</button>
+</div>
+
+<div class="results"> 
+    <div>Prime number #1 = <span id="pn1">N/A</span></div>
+    <div>Prime number #2 = <span id="pn2">N/A</span></div>
+    <div>Prime number #3 = <span id="pn3">N/A</span></div>
+</div>
+
+</body>
+</html>
